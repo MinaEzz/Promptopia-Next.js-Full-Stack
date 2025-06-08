@@ -1,0 +1,6 @@
+export type TUser = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
