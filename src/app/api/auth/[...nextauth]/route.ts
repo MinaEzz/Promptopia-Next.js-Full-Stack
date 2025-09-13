@@ -37,7 +37,6 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session }: { session: Session }) {
-      console.log("session", session);
       await connectDB();
       const sessionUser = await User.findOne(
         { email: session.user?.email },
@@ -58,7 +57,6 @@ const handler = NextAuth({
       profile?: Profile;
     }) {
       const googleProfile = profile as GoogleProfile;
-      console.log("profile", profile);
       await connectDB();
       try {
         const userExists = await User.findOne({ email: googleProfile?.email });

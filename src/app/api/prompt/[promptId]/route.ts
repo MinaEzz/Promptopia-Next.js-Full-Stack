@@ -1,6 +1,7 @@
 import "server-only";
 import Prompt from "@/models/prompt.model";
 import { connectDB } from "@/utils/connectDB";
+import { getServerSession } from "next-auth";
 
 export const GET = async (
   _request: Request,
@@ -72,7 +73,51 @@ export const DELETE = async (
 ) => {
   const { promptId } = await params;
   try {
+    const session = await getServerSession();
+    if (!session) {
+      return new Response(
+        JSON.stringify({
+          status: "FAILED",
+          message: "Unauthorized",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 401,
+        }
+      );
+    }
     await connectDB();
+    const prompt = await Prompt.findById(promptId).populate("creator");
+    if (!prompt) {
+      return new Response(
+        JSON.stringify({
+          status: "FAILED",
+          message: "Prompt not found",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 404,
+        }
+      );
+    }
+    if (prompt.creator.email !== session.user?.email) {
+      return new Response(
+        JSON.stringify({
+          status: "FAILED",
+          message: "Unauthorized",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 401,
+        }
+      );
+    }
     await Prompt.findByIdAndDelete(promptId);
     return new Response(
       JSON.stringify({
@@ -123,7 +168,37 @@ export const PUT = async (
   const { promptId } = await params;
   const body = await request.json();
   try {
+    const session = await getServerSession();
+    if (!session) {
+      return new Response(
+        JSON.stringify({
+          status: "FAILED",
+          message: "Unauthorized",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 401,
+        }
+      );
+    }
     await connectDB();
+    const prompt = await Prompt.findById(promptId).populate("creator");
+    if (!prompt) {
+      return new Response(
+        JSON.stringify({
+          status: "FAILED",
+          message: "Prompt not found",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 404,
+        }
+      );
+    }
     const existingPrompt = await Prompt.findById(promptId);
     if (!existingPrompt) {
       return new Response(
@@ -136,6 +211,20 @@ export const PUT = async (
             "Content-Type": "application/json",
           },
           status: 404,
+        }
+      );
+    }
+    if (existingPrompt.creator.email !== session.user?.email) {
+      return new Response(
+        JSON.stringify({
+          status: "FAILED",
+          message: "Unauthorized",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 401,
         }
       );
     }
